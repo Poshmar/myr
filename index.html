@@ -7,15 +7,15 @@
     <meta name="description" content="Aether Cultivation - Immersive RPG Adventure">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Aether">
     <title>Aether Cultivation</title>
-    <!-- PWA Required -->
-    <link rel="icon" type="image/png" href="./img/icon.png">
+    <link rel="icon" type="image/png" href="./img/icon-192.png">
+    <link rel="apple-touch-icon" href="./img/icon-192.png">
     <link rel="manifest" href="./manifest.json">
-    <!-- Fonts back -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        /* ---- FULL RESET & DARK MODE PROOF ---- */
         * {
             margin: 0;
             padding: 0;
@@ -74,7 +74,6 @@
             background: transparent;
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
-        /* ---- SINGLE SCENE DISPLAY — NO OVERLAP ---- */
         .scene {
             position: absolute;
             inset: 0;
@@ -87,10 +86,7 @@
             display: none;
             background: transparent;
         }
-        .scene.active {
-            display: flex;
-        }
-        /* ---- LOADER ---- */
+        .scene.active { display: flex; }
         .loading-text {
             font-family: 'Lato', sans-serif;
             font-size: clamp(0.75rem, 2.5vw, 1rem);
@@ -114,7 +110,6 @@
             box-shadow: 0 0 18px var(--primary-gold);
             transition: width 0.2s linear;
         }
-        /* ---- SPLASH ---- */
         #studio-scene h1 {
             font-size: clamp(2rem, 10vw, 5rem);
             color: var(--primary-gold);
@@ -129,13 +124,8 @@
             80% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
             100% { opacity: 0; letter-spacing: 8px; filter: blur(8px); transform: scale(1.05); }
         }
-        /* ---- MENU ---- */
-        #menu-scene {
-            padding: 20px;
-        }
-        #menu-scene.fade-in {
-            animation: fadeIn var(--transition-slow) ease forwards;
-        }
+        #menu-scene { padding: 20px; }
+        #menu-scene.fade-in { animation: fadeIn var(--transition-slow) ease forwards; }
         @keyframes fadeIn { 
             from { opacity: 0; transform: translateY(15px); } 
             to { opacity: 1; transform: translateY(0); } 
@@ -188,15 +178,12 @@
             transition: transform 0.3s ease;
             z-index: -1;
         }
-        .play-btn:hover::before, 
-        .play-btn:active::before { transform: translateY(0); }
-        .play-btn:hover, 
-        .play-btn:active {
+        .play-btn:hover::before, .play-btn:active::before { transform: translateY(0); }
+        .play-btn:hover, .play-btn:active {
             color: #0b0f19;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
         }
-        /* ---- PWA INSTALL BUTTON ---- */
         .install-btn {
             margin-top: min(6vw, 25px);
             background: transparent;
@@ -209,32 +196,19 @@
             transition: color 0.3s ease;
             opacity: 1 !important;
         }
-        .install-btn:hover {
-            color: var(--primary-gold);
-        }
-        .install-btn.hidden {
-            display: none !important;
-        }
+        .install-btn:hover { color: var(--primary-gold); }
+        .install-btn.hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="bg-layer"></div>
     <div class="overlay"></div>
     <div class="container">
-        <!-- Loader -->
         <div id="loader-scene" class="scene active">
             <div class="loading-text">Summoning Assets...</div>
-            <div class="rpg-bar-border">
-                <div class="rpg-bar-fill" id="fill"></div>
-            </div>
+            <div class="rpg-bar-border"><div class="rpg-bar-fill" id="fill"></div></div>
         </div>
-
-        <!-- Splash -->
-        <div id="studio-scene" class="scene">
-            <h1>MYTHIC<br>FORGE</h1>
-        </div>
-
-        <!-- Menu -->
+        <div id="studio-scene" class="scene"><h1>MYTHIC<br>FORGE</h1></div>
         <div id="menu-scene" class="scene">
             <h1 class="game-logo">AETHER<br>CULTIVATION</h1>
             <div class="tagline">Realm of Shadows</div>
@@ -246,13 +220,12 @@
 (() => {
     'use strict';
     const CONFIG = {
-        assets: ['./img/background.png', './img/icon.png'],
+        assets: ['./img/background.png', './img/icon-192.png'],
         minLoadTime: 1200,
         safetyTimeout: 3500,
         transitionDelay: 500,
         studioDisplayTime: 2000
     };
-
     const ui = {
         loader: document.getElementById('loader-scene'),
         studio: document.getElementById('studio-scene'),
@@ -260,94 +233,59 @@
         bar: document.getElementById('fill'),
         installBtn: document.getElementById('btn-install')
     };
-
     let state = { deferredPrompt: null };
 
-    // ---- SCENE SWAP: ONLY ONE ACTIVE ----
     function showScene(sceneId) {
-        [ui.loader, ui.studio, ui.menu].forEach(scene => {
-            scene.classList.remove('active');
-            scene.classList.remove('fade-in');
-        });
-        if (sceneId) {
-            document.getElementById(sceneId).classList.add('active');
-        }
+        [ui.loader, ui.studio, ui.menu].forEach(s => { s.classList.remove('active','fade-in'); });
+        if(sceneId) document.getElementById(sceneId).classList.add('active');
     }
 
-    // ---- ASSET LOADER ----
     function loadAssets(urls) {
-        return new Promise(resolve => {
-            if (!urls?.length) return resolve();
-            let loaded = 0, resolved = false;
-            const total = urls.length;
-            const safety = setTimeout(() => finish(), CONFIG.safetyTimeout);
-            function finish() {
-                if (resolved) return;
-                resolved = true;
-                clearTimeout(safety);
-                resolve();
-            }
-            urls.forEach(url => {
-                const img = new Image();
-                img.decoding = 'async';
-                img.onload = img.onerror = () => {
-                    loaded++;
-                    if (ui.bar) ui.bar.style.width = `${(loaded/total)*100}%`;
-                    if (loaded === total) finish();
+        return new Promise(res => {
+            if(!urls?.length) return res();
+            let loaded=0, done=false, total=urls.length;
+            setTimeout(()=>done||res(), CONFIG.safetyTimeout);
+            urls.forEach(u=>{
+                const i=new Image();
+                i.onload=i.onerror=()=>{
+                    if(done)return;
+                    loaded++; ui.bar.style.width=`${(loaded/total)*100}%`;
+                    if(loaded===total){done=true;res();}
                 };
-                img.src = url;
+                i.src=u;
             });
         });
     }
 
-    // ---- STARTUP FLOW — ALWAYS IN ORDER ----
     async function startFlow() {
         showScene('loader-scene');
-
         await Promise.all([
-            new Promise(r => setTimeout(r, CONFIG.minLoadTime)),
+            new Promise(r=>setTimeout(r,CONFIG.minLoadTime)),
             loadAssets(CONFIG.assets)
         ]);
-
-        setTimeout(() => {
+        setTimeout(()=>{
             showScene('studio-scene');
-            setTimeout(() => {
-                showScene('menu-scene');
-                ui.menu.classList.add('fade-in');
-            }, CONFIG.studioDisplayTime);
+            setTimeout(()=>{ showScene('menu-scene'); ui.menu.classList.add('fade-in'); }, CONFIG.studioDisplayTime);
         }, CONFIG.transitionDelay);
     }
 
-    // ---- NAVIGATION ----
     window.enterWorld = () => {
-        document.body.style.opacity = '0';
-        setTimeout(() => window.location.href = 'class.html', CONFIG.transitionDelay);
+        document.body.style.opacity='0';
+        setTimeout(()=>location.href='class.html', CONFIG.transitionDelay);
     };
 
-    // ---- ✅ PWA INSTALL LOGIC ----
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        state.deferredPrompt = e;
-        ui.installBtn.classList.remove('hidden');
+    window.addEventListener('beforeinstallprompt', e=>{
+        e.preventDefault(); state.deferredPrompt=e; ui.installBtn.classList.remove('hidden');
     });
-
     window.installApp = async () => {
-        if (!state.deferredPrompt) return;
+        if(!state.deferredPrompt)return;
         state.deferredPrompt.prompt();
-        const { outcome } = await state.deferredPrompt.userChoice;
-        state.deferredPrompt = null;
-        ui.installBtn.classList.add('hidden');
-        console.log(`Install prompt outcome: ${outcome}`);
+        await state.deferredPrompt.userChoice;
+        state.deferredPrompt=null; ui.installBtn.classList.add('hidden');
     };
 
-    // ---- SERVICE WORKER CLEANUP ----
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations()
-            .then(regs => regs.forEach(r => r.unregister()))
-            .catch(() => {});
-    }
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e=>console.log(e));
 
-    // ---- RUN ----
     window.addEventListener('pageshow', startFlow);
     document.addEventListener('DOMContentLoaded', startFlow);
 })();

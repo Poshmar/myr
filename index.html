@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0b0f19">
-    <meta name="description" content="Aether Cultivation - Immersive RPG Adventure">
+    <meta name="description" content="Aether Cultivation - Realm of Shadows">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Aether">
     <title>Aether Cultivation</title>
-    <link rel="icon" type="image/jpg" href="./img/icon-192.jpg">
-    <link rel="apple-touch-icon" href="./img/icon-192.jpg">
+
+    <!-- ✅ Icons must be PNG -->
+    <link rel="icon" type="image/png" href="./img/icon-192.png">
+    <link rel="apple-touch-icon" href="./img/icon-192.png">
     <link rel="manifest" href="./manifest.json">
+
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -50,10 +54,13 @@
             align-items: center;
             background-color: #0b0f19 !important;
         }
+
+        /* ✅ FIXED BACKGROUND — make sure file exists at img/background.png or .jpg */
         .bg-layer {
             position: fixed;
             inset: 0;
-            background: url('./img/background.jpg') center/cover no-repeat;
+            background: url('./img/background.png') center/cover no-repeat;
+            background-color: #0b0f19;
             z-index: -2;
             filter: brightness(0.8);
             transform: translateZ(0);
@@ -64,6 +71,7 @@
             background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(11,15,25,0.55) 90%);
             z-index: -1;
         }
+
         .container {
             position: relative;
             width: 100%;
@@ -75,6 +83,7 @@
             background: transparent;
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
+
         .scene {
             position: absolute;
             inset: 0;
@@ -88,6 +97,7 @@
             background: transparent;
         }
         .scene.active { display: flex; }
+
         .loading-text {
             font-family: 'Lato', sans-serif;
             font-size: clamp(0.75rem, 2.5vw, 1rem);
@@ -111,6 +121,7 @@
             box-shadow: 0 0 18px var(--primary-gold);
             transition: width 0.2s linear;
         }
+
         #studio-scene h1 {
             font-size: clamp(2rem, 10vw, 5rem);
             color: var(--primary-gold);
@@ -123,14 +134,16 @@
             0% { opacity: 0; letter-spacing: 15px; filter: blur(8px); transform: scale(0.95); }
             40% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
             80% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
-            100% { opacity: 0; letter-spacing: 8px; filter: blur(0); transform: scale(1.05); }
+            100% { opacity: 0; letter-spacing: 8px; filter: blur(8px); transform: scale(1.05); }
         }
+
         #menu-scene { padding: 20px; }
         #menu-scene.fade-in { animation: fadeIn var(--transition-slow) ease forwards; }
         @keyframes fadeIn { 
             from { opacity: 0; transform: translateY(15px); } 
             to { opacity: 1; transform: translateY(0); } 
         }
+
         .game-logo {
             font-size: clamp(2.5rem, 12vw, 5rem);
             font-weight: 900;
@@ -152,6 +165,7 @@
             opacity: 1 !important;
             margin-bottom: 3rem;
         }
+
         .play-btn {
             background: rgba(11, 15, 25, 0.75);
             border: 2px solid var(--primary-gold);
@@ -179,7 +193,7 @@
             transition: transform var(--transition-fast);
             z-index: -1;
         }
-        /* ✅ FIX: Works on desktop hover + mobile tap */
+        /* ✅ Works on desktop hover + mobile tap */
         .play-btn:hover::before,
         .play-btn:active::before,
         .play-btn:focus::before { transform: translateY(0); }
@@ -195,6 +209,7 @@
             transform: scale(0.97) translateY(0);
             box-shadow: none;
         }
+
         .install-btn {
             margin-top: min(6vw, 25px);
             background: transparent;
@@ -227,11 +242,13 @@
             <button id="btn-install" class="install-btn hidden" onclick="installApp()">Install App</button>
         </div>
     </div>
+
 <script>
 (() => {
     'use strict';
     const CONFIG = {
-        assets: ['./img/background.jpg', './img/icon-192.jpg'],
+        // ✅ Match your actual file names exactly
+        assets: ['./img/background.png', './img/icon-192.png'],
         minLoadTime: 1200,
         safetyTimeout: 3500,
         transitionDelay: 500,
@@ -285,11 +302,9 @@
         setTimeout(()=>location.href='class.html', CONFIG.transitionDelay);
     };
 
-    // ✅ Force install prompt logic
     window.addEventListener('beforeinstallprompt', e=>{
         e.preventDefault();
         state.deferredPrompt=e;
-        // Show button immediately
         ui.installBtn.classList.remove('hidden');
         console.log('✅ Install ready');
     });
@@ -300,10 +315,9 @@
             return;
         }
         state.deferredPrompt.prompt();
-        const { outcome } = await state.deferredPrompt.userChoice;
+        await state.deferredPrompt.userChoice;
         state.deferredPrompt=null;
         ui.installBtn.classList.add('hidden');
-        alert(outcome === 'accepted' ? '✅ Installed! Open from home screen.' : 'Install canceled.');
     };
 
     if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e=>console.log('SW:',e));

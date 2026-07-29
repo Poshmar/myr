@@ -38,6 +38,7 @@
         :root {
             --primary-gold: #c5a059;
             --gold-bright: #e8d6b0;
+            --transition-fast: 0.3s ease;
             --transition-med: 0.6s ease;
             --transition-slow: 1.2s ease;
         }
@@ -122,7 +123,7 @@
             0% { opacity: 0; letter-spacing: 15px; filter: blur(8px); transform: scale(0.95); }
             40% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
             80% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
-            100% { opacity: 0; letter-spacing: 8px; filter: blur(8px); transform: scale(1.05); }
+            100% { opacity: 0; letter-spacing: 8px; filter: blur(0); transform: scale(1.05); }
         }
         #menu-scene { padding: 20px; }
         #menu-scene.fade-in { animation: fadeIn var(--transition-slow) ease forwards; }
@@ -164,7 +165,7 @@
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 3px;
-            transition: all 0.3s ease;
+            transition: all var(--transition-fast);
             position: relative;
             overflow: hidden;
             opacity: 1 !important;
@@ -175,14 +176,24 @@
             inset: 0;
             background: var(--primary-gold);
             transform: translateY(100%);
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-fast);
             z-index: -1;
         }
-        .play-btn:hover::before, .play-btn:active::before { transform: translateY(0); }
-        .play-btn:hover, .play-btn:active {
+        /* ✅ FIX: Works on desktop hover + mobile tap */
+        .play-btn:hover::before,
+        .play-btn:active::before,
+        .play-btn:focus::before { transform: translateY(0); }
+
+        .play-btn:hover,
+        .play-btn:active,
+        .play-btn:focus {
             color: #0b0f19;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
+        }
+        .play-btn:active {
+            transform: scale(0.97) translateY(0);
+            box-shadow: none;
         }
         .install-btn {
             margin-top: min(6vw, 25px);
@@ -193,7 +204,7 @@
             font-size: clamp(0.85rem, 2.5vw, 1rem);
             text-decoration: underline;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: color var(--transition-fast);
             opacity: 1 !important;
         }
         .install-btn:hover { color: var(--primary-gold); }
@@ -274,17 +285,28 @@
         setTimeout(()=>location.href='class.html', CONFIG.transitionDelay);
     };
 
+    // ✅ Force install prompt logic
     window.addEventListener('beforeinstallprompt', e=>{
-        e.preventDefault(); state.deferredPrompt=e; ui.installBtn.classList.remove('hidden');
+        e.preventDefault();
+        state.deferredPrompt=e;
+        // Show button immediately
+        ui.installBtn.classList.remove('hidden');
+        console.log('✅ Install ready');
     });
+
     window.installApp = async () => {
-        if(!state.deferredPrompt)return;
+        if(!state.deferredPrompt){
+            alert('💡 Tip: Tap Chrome 3 dots → "Install Aether Cultivation"');
+            return;
+        }
         state.deferredPrompt.prompt();
-        await state.deferredPrompt.userChoice;
-        state.deferredPrompt=null; ui.installBtn.classList.add('hidden');
+        const { outcome } = await state.deferredPrompt.userChoice;
+        state.deferredPrompt=null;
+        ui.installBtn.classList.add('hidden');
+        alert(outcome === 'accepted' ? '✅ Installed! Open from home screen.' : 'Install canceled.');
     };
 
-    if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e=>console.log(e));
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e=>console.log('SW:',e));
 
     window.addEventListener('pageshow', startFlow);
     document.addEventListener('DOMContentLoaded', startFlow);

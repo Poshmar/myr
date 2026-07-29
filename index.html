@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="description" content="Aether Cultivation - Immersive RPG Adventure">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Aether Cultivation</title>
+    <!-- PWA Required -->
+    <link rel="icon" type="image/png" href="./img/icon.png">
+    <link rel="manifest" href="./manifest.json">
+    <!-- Fonts back -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ---- FULL RESET & DARK MODE PROOF ---- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            font-weight: inherit;
+            font-size: inherit;
+            color: #fff;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #0b0f19 !important;
+            font-family: 'Cinzel', serif;
+            color-scheme: only light;
+            -webkit-color-scheme: only light;
+        }
+        :root {
+            --primary-gold: #c5a059;
+            --gold-bright: #e8d6b0;
+            --transition-med: 0.6s ease;
+            --transition-slow: 1.2s ease;
+        }
+        body {
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0b0f19 !important;
+        }
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            background: url('./img/background.png') center/cover no-repeat;
+            z-index: -2;
+            filter: brightness(0.8);
+            transform: translateZ(0);
+        }
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(11,15,25,0.55) 90%);
+            z-index: -1;
+        }
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: min(90vw, 600px);
+            height: 100vh;
+            margin: 0 auto;
+            isolation: isolate;
+            transform: translateZ(0);
+            background: transparent;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        /* ---- SINGLE SCENE DISPLAY — NO OVERLAP ---- */
+        .scene {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            display: none;
+            background: transparent;
+        }
+        .scene.active {
+            display: flex;
+        }
+        /* ---- LOADER ---- */
+        .loading-text {
+            font-family: 'Lato', sans-serif;
+            font-size: clamp(0.75rem, 2.5vw, 1rem);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #f0f0f0;
+            margin-bottom: 1rem;
+            opacity: 1 !important;
+        }
+        .rpg-bar-border {
+            width: min(80vw, 300px);
+            height: clamp(6px, 1.5vw, 10px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .rpg-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-gold), var(--gold-bright));
+            box-shadow: 0 0 18px var(--primary-gold);
+            transition: width 0.2s linear;
+        }
+        /* ---- SPLASH ---- */
+        #studio-scene h1 {
+            font-size: clamp(2rem, 10vw, 5rem);
+            color: var(--primary-gold);
+            font-weight: 900;
+            text-align: center;
+            animation: textReveal 2.2s ease forwards;
+            opacity: 1 !important;
+        }
+        @keyframes textReveal {
+            0% { opacity: 0; letter-spacing: 15px; filter: blur(8px); transform: scale(0.95); }
+            40% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
+            80% { opacity: 1; letter-spacing: 5px; filter: blur(0); }
+            100% { opacity: 0; letter-spacing: 8px; filter: blur(8px); transform: scale(1.05); }
+        }
+        /* ---- MENU ---- */
+        #menu-scene {
+            padding: 20px;
+        }
+        #menu-scene.fade-in {
+            animation: fadeIn var(--transition-slow) ease forwards;
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .game-logo {
+            font-size: clamp(2.5rem, 12vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(to bottom, #ffffff 40%, var(--gold-bright) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            filter: drop-shadow(0 0 22px rgba(197, 160, 89, 0.4));
+            margin-bottom: 0.5rem;
+            opacity: 1 !important;
+        }
+        .tagline {
+            font-family: 'Lato', sans-serif;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--gold-bright);
+            opacity: 1 !important;
+            margin-bottom: 3rem;
+        }
+        .play-btn {
+            background: rgba(11, 15, 25, 0.75);
+            border: 2px solid var(--primary-gold);
+            color: var(--primary-gold);
+            font-family: 'Cinzel';
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            font-weight: bold;
+            padding: clamp(14px, 4vw, 22px) clamp(30px, 8vw, 50px);
+            width: 100%;
+            max-width: min(80vw, 320px);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            opacity: 1 !important;
+        }
+        .play-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--primary-gold);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+        .play-btn:hover::before, 
+        .play-btn:active::before { transform: translateY(0); }
+        .play-btn:hover, 
+        .play-btn:active {
+            color: #0b0f19;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(197, 160, 89, 0.4);
+        }
+        /* ---- PWA INSTALL BUTTON ---- */
+        .install-btn {
+            margin-top: min(6vw, 25px);
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-family: 'Lato', sans-serif;
+            font-size: clamp(0.85rem, 2.5vw, 1rem);
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            opacity: 1 !important;
+        }
+        .install-btn:hover {
+            color: var(--primary-gold);
+        }
+        .install-btn.hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="overlay"></div>
+    <div class="container">
+        <!-- Loader -->
+        <div id="loader-scene" class="scene active">
+            <div class="loading-text">Summoning Assets...</div>
+            <div class="rpg-bar-border">
+                <div class="rpg-bar-fill" id="fill"></div>
+            </div>
+        </div>
+
+        <!-- Splash -->
+        <div id="studio-scene" class="scene">
+            <h1>MYTHIC<br>FORGE</h1>
+        </div>
+
+        <!-- Menu -->
+        <div id="menu-scene" class="scene">
+            <h1 class="game-logo">AETHER<br>CULTIVATION</h1>
+            <div class="tagline">Realm of Shadows</div>
+            <button class="play-btn" onclick="enterWorld()">Enter World</button>
+            <button id="btn-install" class="install-btn hidden" onclick="installApp()">Install App</button>
+        </div>
+    </div>
+<script>
+(() => {
+    'use strict';
+    const CONFIG = {
+        assets: ['./img/background.png', './img/icon.png'],
+        minLoadTime: 1200,
+        safetyTimeout: 3500,
+        transitionDelay: 500,
+        studioDisplayTime: 2000
+    };
+
+    const ui = {
+        loader: document.getElementById('loader-scene'),
+        studio: document.getElementById('studio-scene'),
+        menu: document.getElementById('menu-scene'),
+        bar: document.getElementById('fill'),
+        installBtn: document.getElementById('btn-install')
+    };
+
+    let state = { deferredPrompt: null };
+
+    // ---- SCENE SWAP: ONLY ONE ACTIVE ----
+    function showScene(sceneId) {
+        [ui.loader, ui.studio, ui.menu].forEach(scene => {
+            scene.classList.remove('active');
+            scene.classList.remove('fade-in');
+        });
+        if (sceneId) {
+            document.getElementById(sceneId).classList.add('active');
+        }
+    }
+
+    // ---- ASSET LOADER ----
+    function loadAssets(urls) {
+        return new Promise(resolve => {
+            if (!urls?.length) return resolve();
+            let loaded = 0, resolved = false;
+            const total = urls.length;
+            const safety = setTimeout(() => finish(), CONFIG.safetyTimeout);
+            function finish() {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(safety);
+                resolve();
+            }
+            urls.forEach(url => {
+                const img = new Image();
+                img.decoding = 'async';
+                img.onload = img.onerror = () => {
+                    loaded++;
+                    if (ui.bar) ui.bar.style.width = `${(loaded/total)*100}%`;
+                    if (loaded === total) finish();
+                };
+                img.src = url;
+            });
+        });
+    }
+
+    // ---- STARTUP FLOW — ALWAYS IN ORDER ----
+    async function startFlow() {
+        showScene('loader-scene');
+
+        await Promise.all([
+            new Promise(r => setTimeout(r, CONFIG.minLoadTime)),
+            loadAssets(CONFIG.assets)
+        ]);
+
+        setTimeout(() => {
+            showScene('studio-scene');
+            setTimeout(() => {
+                showScene('menu-scene');
+                ui.menu.classList.add('fade-in');
+            }, CONFIG.studioDisplayTime);
+        }, CONFIG.transitionDelay);
+    }
+
+    // ---- NAVIGATION ----
+    window.enterWorld = () => {
+        document.body.style.opacity = '0';
+        setTimeout(() => window.location.href = 'class.html', CONFIG.transitionDelay);
+    };
+
+    // ---- ✅ PWA INSTALL LOGIC ----
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        state.deferredPrompt = e;
+        ui.installBtn.classList.remove('hidden');
+    });
+
+    window.installApp = async () => {
+        if (!state.deferredPrompt) return;
+        state.deferredPrompt.prompt();
+        const { outcome } = await state.deferredPrompt.userChoice;
+        state.deferredPrompt = null;
+        ui.installBtn.classList.add('hidden');
+        console.log(`Install prompt outcome: ${outcome}`);
+    };
+
+    // ---- SERVICE WORKER CLEANUP ----
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations()
+            .then(regs => regs.forEach(r => r.unregister()))
+            .catch(() => {});
+    }
+
+    // ---- RUN ----
+    window.addEventListener('pageshow', startFlow);
+    document.addEventListener('DOMContentLoaded', startFlow);
+})();
+</script>
+</body>
+</html>
